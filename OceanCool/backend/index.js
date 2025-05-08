@@ -31,14 +31,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const app = express();
-
-app.get('/buildings', (req, res) => {
-  // TODO: Implement logic to fetch building location data
-  res.json([
-    { id: 1, name: 'Building A', lat: 37.7749, lng: -122.4194 },
-    { id: 2, name: 'Building B', lat: 37.7833, lng: -122.4167 }
-  ]);
-});
 const port = 3001;
 
 app.use(bodyParser.json());
@@ -118,6 +110,15 @@ app.post('/login', async (req, res) => {
 });
 
 const { verifyToken, authorize } = require('./middleware/auth');
+const fetch = require('node-fetch');
+
+const apiKey = '73c107d10d3e7418528bfe3786a4686f';
+const cities = [
+  'Kigali', 'Cape Town', 'New York', 'London', 'Paris', 'Tokyo', 'Guangzhou', 'Miami', 'Delhi', 'Jacksonville',
+  'Virginia Beach', 'Manilla', 'Lagos', 'Osaka', 'Jakarta', 'Nairobi', 'Burundi', 'Kinshasa', 'Bujumbura', 'Lima',
+  'Karachi', 'Muscat', 'Washington', 'Seattle', 'Otawa', 'Toronto', 'Berlin', 'Rio de Janeiro', 'Texas', 'Amsterdam',
+  'Barcelona', 'Venice', 'Oslo', 'Madrid', 'Addis Ababa', 'Abuja', 'Dar es Salaam', 'Kampala'
+];
 
 app.get('/status', verifyToken, authorize('read'), (req, res) => {
   // Dummy data for system status
@@ -130,6 +131,28 @@ app.get('/status', verifyToken, authorize('read'), (req, res) => {
     efficiency: 4.2,
   };
   res.json(statusData);
+});
+
+app.get('/alerts', verifyToken, authorize('read'), (req, res) => {
+  // Dummy data for alerts
+  const alertData = [
+    { id: 1, message: 'High temperature detected in Heat Exchanger 1', severity: 'High' },
+    { id: 2, message: 'Low pressure detected in Distribution Network', severity: 'Medium' },
+    { id: 3, message: 'Maintenance required for Pump 2', severity: 'Low' },
+  ];
+  res.json(alertData);
+});
+
+app.get('/metrics', verifyToken, authorize('read'), (req, res) => {
+  // Dummy data for performance metrics
+  const metricsData = {
+    energyEfficiency: 4.5,
+    coolingCapacity: 5200,
+    environmentalImpact: {
+      co2Savings: 1500,
+    },
+  };
+  res.json(metricsData);
 });
 
 app.post('/forgot-password', (req, res) => {
@@ -187,26 +210,24 @@ app.post('/reset-password', async (req, res) => {
   res.json({ message: 'Password reset successfully' });
 });
 
-app.get('/alerts', verifyToken, authorize('read'), (req, res) => {
-  // Dummy data for alerts
-  const alertData = [
-    { id: 1, message: 'High temperature detected in Heat Exchanger 1', severity: 'High' },
-    { id: 2, message: 'Low pressure detected in Distribution Network', severity: 'Medium' },
-    { id: 3, message: 'Maintenance required for Pump 2', severity: 'Low' },
-  ];
-  res.json(alertData);
-});
-
-app.get('/metrics', verifyToken, authorize('read'), (req, res) => {
-  // Dummy data for performance metrics
-  const metricsData = {
-    energyEfficiency: 4.5,
-    coolingCapacity: 5200,
-    environmentalImpact: {
-      co2Savings: 1500,
-    },
-  };
-  res.json(metricsData);
+app.get('/weather', verifyToken, authorize('read'), async (req, res) => {
+  try {
+    const weatherData = {};
+    for (const city of cities) {
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+      const response = await fetch(url);
+      const data = await response.json();
+      weatherData[city] = {
+        temperature: data?.main?.temp,
+        description: data?.weather[0]?.description,
+        icon: data?.weather[0]?.icon,
+      };
+    }
+    res.json(weatherData);
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+    res.status(500).json({ message: 'Error fetching weather data' });
+  }
 });
 
 const WebSocket = require('ws');

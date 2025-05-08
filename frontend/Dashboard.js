@@ -174,6 +174,153 @@ function Dashboard() {
         <h3>Lifecycle Management</h3>
         <p>Here you can manage the lifecycle of the components.</p>
       </div>
+
+      <h2>Support and Analysis</h2>
+      <div className="support-and-analysis">
+        {/* Documentation Access */}
+        <h3>Documentation Access</h3>
+        <p>Here you can access the system documentation.</p>
+
+        {/* Spare Parts Management */}
+        <h3>Spare Parts Management</h3>
+        <p>Here you can manage spare parts.</p>
+
+        {/* Alert Dashboard */}
+        <h3>Alert Dashboard</h3>
+        <p>Here you can view the alert dashboard.</p>
+
+        {/* Diagnostic Tools */}
+        <h3>Diagnostic Tools</h3>
+        <p>Here you can use diagnostic tools.</p>
+
+        {/* Root Cause Analysis */}
+        <h3>Root Cause Analysis</h3>
+        <p>Here you can perform root cause analysis.</p>
+
+        {/* Resolution Tracking */}
+        <h3>Resolution Tracking</h3>
+        <p>Here you can track the resolution of issues.</p>
+
+        {/* Historical Analysis */}
+        <h3>Historical Analysis</h3>
+        <p>Here you can perform historical analysis.</p>
+      </div>
+
+      <h2>Reporting and Analytics</h2>
+      <div className="reporting-and-analytics">
+        {/* Predictive Maintenance */}
+        <h3>Predictive Maintenance</h3>
+        <p>Here you can view predictive maintenance reports.</p>
+
+        {/* Performance Reports */}
+        <h3>Performance Reports</h3>
+        <p>Here you can generate performance reports.</p>
+
+        {/* Environmental Impact Analysis */}
+        <h3>Environmental Impact Analysis</h3>
+        <p>Here you can analyze the environmental impact.</p>
+
+        {/* Comparative Benchmarking */}
+        <h3>Comparative Benchmarking</h3>
+        <p>Here you can perform comparative benchmarking.</p>
+
+        {/* Cost Analysis */}
+        <h3>Cost Analysis</h3>
+        <p>Here you can analyze the costs.</p>
+
+        {/* Custom Report Generation */}
+        <h3>Custom Report Generation</h3>
+        <p>Here you can generate custom reports.</p>
+
+        {/* Export Functionality */}
+        <h3>Export Functionality</h3>
+        <p>Here you can export the data.</p>
+      </div>
+
+      <h2>Advanced Analytics and Modeling</h2>
+      <div className="advanced-analytics-and-modeling">
+        {/* System Simulation */}
+        <h3>System Simulation</h3>
+        <p>Here you can run system simulations.</p>
+
+        {/* What-If Analysis */}
+        <h3>What-If Analysis</h3>
+        <p>Here you can perform what-if analysis.</p>
+
+        {/* Parameter Sensitivity */}
+        <h3>Parameter Sensitivity</h3>
+        <p>Here you can analyze parameter sensitivity.</p>
+
+        {/* Optimization Testing */}
+        <h3>Optimization Testing</h3>
+        <p>Here you can perform optimization testing.</p>
+
+        {/* Weather Impact Modeling */}
+        <h3>Weather Impact Modeling</h3>
+        <p>Here you can model the impact of weather.</p>
+
+        {/* Demand Variation Analysis */}
+        <h3>Demand Variation Analysis</h3>
+        <p>Here you can analyze demand variation.</p>
+
+        {/* Building Connection Status */}
+        <h3>Building Connection Status</h3>
+        <p>Here you can view the building connection status.</p>
+      </div>
+
+      <h2>Building Management</h2>
+      <div className="building-management">
+        {/* Building-Level Controls */}
+        <h3>Building-Level Controls</h3>
+        <p>Here you can manage building-level controls.</p>
+
+        {/* Thermal Comfort Feedback */}
+        <h3>Thermal Comfort Feedback</h3>
+        <p>Here you can view thermal comfort feedback.</p>
+
+        {/* Building Energy Profile */}
+        <h3>Building Energy Profile</h3>
+        <p>Here you can view the building energy profile.</p>
+
+        {/* Integration with BMS */}
+        <h3>Integration with BMS</h3>
+        <p>Here you can integrate with Building Management Systems (BMS).</p>
+
+        {/* Tenant Reporting */}
+        <h3>Tenant Reporting</h3>
+        <p>Here you can generate tenant reports.</p>
+
+        {/* User Management */}
+        <h3>User Management</h3>
+        <p>Here you can manage users.</p>
+      </div>
+
+      <h2>System Administration</h2>
+      <div className="system-administration">
+        {/* System Configuration */}
+        <h3>System Configuration</h3>
+        <p>Here you can configure the system.</p>
+
+        {/* Database Management */}
+        <h3>Database Management</h3>
+        <p>Here you can manage the database.</p>
+
+        {/* Security Administration */}
+        <h3>Security Administration</h3>
+        <p>Here you can administer security settings.</p>
+
+        {/* Backup and Recovery */}
+        <h3>Backup and Recovery</h3>
+        <p>Here you can manage backups and recovery.</p>
+
+        {/* Software Updates */}
+        <h3>Software Updates</h3>
+        <p>Here you can manage software updates.</p>
+
+        {/* Mobile Application */}
+        <h3>Mobile Application</h3>
+        <p>Here you can access the mobile application.</p>
+      </div>
     </div>
   );
 }

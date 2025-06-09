@@ -18,7 +18,7 @@ This document summarizes the **initial version** of the solution, fulfilling the
 
 We followed user-centered design principles and a mobile-first approach using **Figma** for wireframing and mockups. The design ensures quick navigation and usability even in high-stress scenarios.
 
-👉 **[Figma Link to Wireframes & Mockups](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1))**
+👉 **[Figma Link to Wireframes & Mockups](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)**
 
 ### 🔹 Technologies Used
 
@@ -63,7 +63,7 @@ We followed user-centered design principles and a mobile-first approach using **
 -   Environment variables secured with .env and deployment secrets
 
 ## 🎥 Demo Video
-👉 [Watch Demo on Google Drive](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1))
+👉 [Watch Demo on Google Drive](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)
 
 ## 📊 Diagrams
-👉 [View Diagrams on Excalidraw](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)](https://excalidraw.com/#json=bgddnHcDfiAtysJdIrHf3,OALuQXYGSPj_b9OqScSQIA))
+👉 [View Diagrams on Excalidraw](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)](https://excalidraw.com/#json=bgddnHcDfiAtysJdIrHf3,OALuQXYGSPj_b9OqScSQIA)

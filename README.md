@@ -10,7 +10,7 @@ To get started with this project:
 
 1.  Ensure you have Flutter SDK installed. For more information, see the [Flutter documentation](https://flutter.dev/docs/get-started/install).
 2.  Clone this repository (if applicable).
-3.  Navigate to the project directory: `cd "c:\Users\hp\Downloads\Rindwa App"` (use quotes if path has spaces)
+3.  Navigate to the project directory
 4.  Install dependencies: `flutter pub get`
 5.  Run the app: `flutter run`
 

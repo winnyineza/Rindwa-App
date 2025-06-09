@@ -1,32 +1,32 @@
-# Rindwa App
+# 📱 Rindwa App
 
-Rindwa App: Community-Based Real-Time Emergency & Safety Mobile Application.
+> A community-driven emergency response and safety alert mobile application designed to enhance public security in Rwanda.
 
-This is a Flutter project.
+---
 
-## Getting Started
+## 🚀 Overview
 
-To get started with this project:
+Rindwa App is a real-time, citizen-centered platform enabling users to report emergencies, verify incidents through community voting, notify emergency contacts, and connect directly with government agencies like the Rwanda National Police. The app leverages mobile-first design and cloud integration to bridge communication gaps in emergency response.
 
-1.  Ensure you have Flutter SDK installed. For more information, see the [Flutter documentation](https://flutter.dev/docs/get-started/install).
-2.  Clone this repository (if applicable).
-3.  Navigate to the project directory
-4.  Install dependencies: `flutter pub get`
-5.  Run the app: `flutter run`
+This document summarizes the **initial version** of the solution, fulfilling the requirements for the FullStack track demonstration.
 
-## Project Structure
+---
 
--   `lib/main.dart`: Main application entry point.
--   `lib/screens/`: Contains all the UI screens for the application.
-    -   `onboarding_screen.dart`: The initial onboarding flow for new users.
-    -   `auth/`: Contains authentication-related screens.
-        -   `login_screen.dart`: User login screen.
-        -   `signup_screen.dart`: User registration screen.
--   `pubspec.yaml`: Flutter project configuration and dependencies.
+## 🎨 Frontend Development
 
-## Features (Planned)
+### 🔹 UI/UX Design Process
 
-(Refer to the full project breakdown for details)
+We followed user-centered design principles and a mobile-first approach using **Figma** for wireframing and mockups. The design ensures quick navigation and usability even in high-stress scenarios.
+
+👉 **[Figma Link to Wireframes & Mockups]([https://your-figma-link.com](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1))**
+
+### 🔹 Technologies Used
+
+- **React Native (Expo)**
+- **TailwindCSS (via NativeWind)**
+- **JavaScript (ES6+)**
+
+### 🔹 Features Demonstrated
 
 -   User Authentication (Phone, Email, Google, Apple)
 -   Emergency Contact Management & SMS Alerts
@@ -39,4 +39,31 @@ To get started with this project:
 -   Government Integration (RNP)
 -   Admin Dashboard
 
-This project was initiated with Cascade, an AI coding assistant.
+## Backend Development
+
+### 🔹 Technologies Used
+
+-   Node.js + Express.js
+-   PostgreSQL (via Prisma ORM)
+-   Firebase Cloud Messaging (for push notifications)
+-   Twilio SMS API (for emergency alerts)
+
+## 🌐 Deployment Process
+
+### 🔹 Hosting & Infrastructure
+-   Frontend: Expo Go during MVP stage
+-   Backend: Node.js hosted on Render (or Firebase Functions)
+-   Database: PostgreSQL (Supabase / Railway for free-tier hosting)
+-   Push Notifications: Firebase Cloud Messaging
+-   SMS: Twilio API (sandbox mode)
+
+### 🔹 Steps
+-   Backend deployed via GitHub -> Render CI pipeline
+-   Expo published for testing via QR code (TestFlight planned for iOS)
+-   Environment variables secured with .env and deployment secrets
+
+## 🎥 Demo Video
+👉 [Watch Demo on Google Drive]([https://your-figma-link.com](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1))
+
+## 📊 Diagrams
+👉 [View Diagrams on Excalidraw]([https://your-figma-link.com](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)](https://excalidraw.com/#json=bgddnHcDfiAtysJdIrHf3,OALuQXYGSPj_b9OqScSQIA))

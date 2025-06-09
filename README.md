@@ -1,10 +1,10 @@
-# 📱 Rindwa App
+# Rindwa App
 
 > A community-driven emergency response and safety alert mobile application designed to enhance public security in Rwanda.
 
 ---
 
-## 🚀 Overview
+## Overview
 
 Rindwa App is a real-time, citizen-centered platform enabling users to report emergencies, verify incidents through community voting, notify emergency contacts, and connect directly with government agencies like the Rwanda National Police. The app leverages mobile-first design and cloud integration to bridge communication gaps in emergency response.
 
@@ -12,7 +12,7 @@ This document summarizes the **initial version** of the solution, fulfilling the
 
 ---
 
-## 🎨 Frontend Development
+## Frontend Development
 
 ### 🔹 UI/UX Design Process
 
@@ -48,7 +48,7 @@ We followed user-centered design principles and a mobile-first approach using **
 -   Firebase Cloud Messaging (for push notifications)
 -   Twilio SMS API (for emergency alerts)
 
-## 🌐 Deployment Process
+## Deployment Process
 
 ### 🔹 Hosting & Infrastructure
 -   Frontend: Expo Go during MVP stage
@@ -62,8 +62,8 @@ We followed user-centered design principles and a mobile-first approach using **
 -   Expo published for testing via QR code (TestFlight planned for iOS)
 -   Environment variables secured with .env and deployment secrets
 
-## 🎥 Demo Video
-👉 [Watch Demo on Google Drive](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)
+## Demo Video
+👉 **[Watch Demo on Google Drive](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)**
 
-## 📊 Diagrams
-👉 [View Diagrams on Excalidraw](https://www.figma.com/design/WHGQbwKFd3CVbiRJoLP8JJ/Rindwa-App?node-id=1-3&t=k2Ioh9f5Ubwcpd7b-1)](https://excalidraw.com/#json=bgddnHcDfiAtysJdIrHf3,OALuQXYGSPj_b9OqScSQIA)
+## Diagrams
+👉 **[View Diagrams on Excalidraw](https://excalidraw.com/#json=bgddnHcDfiAtysJdIrHf3,OALuQXYGSPj_b9OqScSQIA)**

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -15,6 +16,25 @@ type OnboardingNavigationProp = StackNavigationProp<RootStackParamList, 'Onboard
 
 export default function OnboardingScreen() {
   const navigation = useNavigation<OnboardingNavigationProp>();
+
+  useEffect(() => {
+    console.log('OnboardingScreen: Component mounted');
+    return () => {
+      console.log('OnboardingScreen: Component unmounting');
+    };
+  }, []);
+
+  const handleGetStarted = () => {
+    console.log('OnboardingScreen: Get Started pressed');
+    try {
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('OnboardingScreen: Navigation error:', error);
+      Alert.alert('Navigation Error', 'Failed to navigate to login');
+    }
+  };
+
+  console.log('OnboardingScreen: Rendering component');
 
   const features = [
     {
@@ -37,7 +57,7 @@ export default function OnboardingScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Community Safety</Text>
+        <Text style={styles.title}>Welcome to Rindwa App</Text>
         <Text style={styles.subtitle}>
           Empowering communities through shared safety awareness
         </Text>
@@ -52,7 +72,7 @@ export default function OnboardingScreen() {
 
         <TouchableOpacity
           style={styles.getStartedButton}
-          onPress={() => navigation.navigate('Login')}>
+          onPress={handleGetStarted}>
           <Text style={styles.getStartedText}>Get Started</Text>
         </TouchableOpacity>
       </View>

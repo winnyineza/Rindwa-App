@@ -1,232 +1,388 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
+const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Security middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// In-memory storage for demo purposes
-let incidents = [
-  {
-    id: '1',
-    type: 'Emergency',
-    description: 'Medical emergency reported at downtown area',
-    location: 'Main Street & 5th Ave',
-    timestamp: new Date(Date.now() - 10 * 60 * 1000),
-    verifications: 3,
-    verified: true,
-    priority: 'high',
-    reportedBy: 'user123'
-  },
-  {
-    id: '2',
-    type: 'Safety Concern',
-    description: 'Broken streetlight creating unsafe conditions',
-    location: 'Oak Street',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    verifications: 1,
-    verified: false,
-    priority: 'medium',
-    reportedBy: 'user456'
-  }
-];
-
-let emergencyContacts = [
-  {
-    id: '1',
-    userId: 'user123',
-    name: 'John Smith',
-    phone: '+1 (555) 123-4567',
-    relationship: 'Father',
-    isPrimary: true
-  },
-  {
-    id: '2',
-    userId: 'user123',
-    name: 'Sarah Johnson',
-    phone: '+1 (555) 987-6543',
-    relationship: 'Friend',
-    isPrimary: false
-  }
-];
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Community Safety Backend is running' });
+  res.json({ 
+    status: 'ok', 
+    message: 'Rindwa Backend is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Authentication middleware
+const authenticateToken = async (req: any, res: any, next: any) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
+};
+
+// Authentication endpoints
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, name, phone } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Email, password, and name are required' });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        phone
+      }
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      message: 'User created successfully',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone
+      }
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Incidents endpoints
-app.get('/api/incidents', (req, res) => {
-  res.json(incidents);
+app.get('/api/incidents', async (req, res) => {
+  try {
+    const incidents = await prisma.incident.findMany({
+      include: {
+        reporter: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        verifications: true,
+        media: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json(incidents);
+  } catch (error) {
+    console.error('Get incidents error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-app.post('/api/incidents', (req, res) => {
-  const { type, description, location, priority = 'medium' } = req.body;
-  
-  if (!type || !description || !location) {
-    return res.status(400).json({ error: 'Missing required fields' });
+app.post('/api/incidents', authenticateToken, async (req, res) => {
+  try {
+    const { type, description, location, priority = 'medium', latitude, longitude } = req.body;
+    const userId = req.user.userId;
+
+    if (!type || !description || !location) {
+      return res.status(400).json({ error: 'Type, description, and location are required' });
+    }
+
+    const incident = await prisma.incident.create({
+      data: {
+        type,
+        description,
+        location,
+        priority,
+        latitude,
+        longitude,
+        reportedBy: userId
+      },
+      include: {
+        reporter: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json(incident);
+  } catch (error) {
+    console.error('Create incident error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  const newIncident = {
-    id: Date.now().toString(),
-    type,
-    description,
-    location,
-    timestamp: new Date(),
-    verifications: 0,
-    verified: false,
-    priority,
-    reportedBy: req.headers['user-id'] || 'anonymous'
-  };
-
-  incidents.unshift(newIncident);
-  res.status(201).json(newIncident);
 });
 
-app.patch('/api/incidents/:id/verify', (req, res) => {
-  const incident = incidents.find(i => i.id === req.params.id);
-  
-  if (!incident) {
-    return res.status(404).json({ error: 'Incident not found' });
-  }
+app.patch('/api/incidents/:id/verify', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
 
-  incident.verifications += 1;
-  if (incident.verifications >= 3) {
-    incident.verified = true;
-  }
+    // Check if user already verified this incident
+    const existingVerification = await prisma.verification.findUnique({
+      where: {
+        incidentId_userId: {
+          incidentId: id,
+          userId: userId
+        }
+      }
+    });
 
-  res.json(incident);
+    if (existingVerification) {
+      return res.status(400).json({ error: 'You have already verified this incident' });
+    }
+
+    // Create verification
+    await prisma.verification.create({
+      data: {
+        incidentId: id,
+        userId: userId
+      }
+    });
+
+    // Get updated incident with verification count
+    const incident = await prisma.incident.findUnique({
+      where: { id },
+      include: {
+        verifications: true,
+        reporter: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    // Auto-verify if 3 or more verifications
+    if (incident && incident.verifications.length >= 3) {
+      await prisma.incident.update({
+        where: { id },
+        data: { verified: true }
+      });
+      incident.verified = true;
+    }
+
+    res.json(incident);
+  } catch (error) {
+    console.error('Verify incident error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Emergency contacts endpoints
-app.get('/api/contacts', (req, res) => {
-  const userId = req.headers['user-id'] || 'user123';
-  const userContacts = emergencyContacts.filter(c => c.userId === userId);
-  res.json(userContacts);
+app.get('/api/contacts', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const contacts = await prisma.emergencyContact.findMany({
+      where: { userId },
+      orderBy: { isPrimary: 'desc' }
+    });
+
+    res.json(contacts);
+  } catch (error) {
+    console.error('Get contacts error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-app.post('/api/contacts', (req, res) => {
-  const { name, phone, relationship, isPrimary = false } = req.body;
-  const userId = req.headers['user-id'] || 'user123';
-  
-  if (!name || !phone || !relationship) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+app.post('/api/contacts', authenticateToken, async (req, res) => {
+  try {
+    const { name, phone, relationship, isPrimary = false } = req.body;
+    const userId = req.user.userId;
 
-  // If setting as primary, unset other primary contacts
-  if (isPrimary) {
-    emergencyContacts.forEach(contact => {
-      if (contact.userId === userId) {
-        contact.isPrimary = false;
+    if (!name || !phone || !relationship) {
+      return res.status(400).json({ error: 'Name, phone, and relationship are required' });
+    }
+
+    // If setting as primary, unset other primary contacts
+    if (isPrimary) {
+      await prisma.emergencyContact.updateMany({
+        where: { userId },
+        data: { isPrimary: false }
+      });
+    }
+
+    const contact = await prisma.emergencyContact.create({
+      data: {
+        userId,
+        name,
+        phone,
+        relationship,
+        isPrimary
       }
     });
+
+    res.status(201).json(contact);
+  } catch (error) {
+    console.error('Create contact error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  const newContact = {
-    id: Date.now().toString(),
-    userId,
-    name,
-    phone,
-    relationship,
-    isPrimary
-  };
-
-  emergencyContacts.push(newContact);
-  res.status(201).json(newContact);
 });
 
-app.put('/api/contacts/:id', (req, res) => {
-  const contact = emergencyContacts.find(c => c.id === req.params.id);
-  
-  if (!contact) {
-    return res.status(404).json({ error: 'Contact not found' });
-  }
+// User profile endpoint
+app.get('/api/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
 
-  const { name, phone, relationship, isPrimary } = req.body;
-  
-  // If setting as primary, unset other primary contacts for this user
-  if (isPrimary && !contact.isPrimary) {
-    emergencyContacts.forEach(c => {
-      if (c.userId === contact.userId && c.id !== contact.id) {
-        c.isPrimary = false;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        incidents: {
+          select: { id: true }
+        },
+        verifications: {
+          select: { id: true }
+        }
       }
     });
-  }
 
-  Object.assign(contact, { name, phone, relationship, isPrimary });
-  res.json(contact);
-});
-
-app.delete('/api/contacts/:id', (req, res) => {
-  const index = emergencyContacts.findIndex(c => c.id === req.params.id);
-  
-  if (index === -1) {
-    return res.status(404).json({ error: 'Contact not found' });
-  }
-
-  emergencyContacts.splice(index, 1);
-  res.status(204).send();
-});
-
-// User profile endpoints
-app.get('/api/profile', (req, res) => {
-  const userId = req.headers['user-id'] || 'user123';
-  const userIncidents = incidents.filter(i => i.reportedBy === userId);
-  const userVerifications = incidents.reduce((count, incident) => {
-    // Simulate user helping with verifications
-    return count + Math.floor(Math.random() * 2);
-  }, 0);
-
-  res.json({
-    id: userId,
-    name: 'Alex Johnson',
-    email: 'alex.johnson@email.com',
-    joinDate: 'March 2024',
-    reportsSubmitted: userIncidents.length,
-    verificationsHelped: userVerifications
-  });
-});
-
-// Authentication endpoints (mock)
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password required' });
-  }
-
-  // Mock authentication
-  res.json({
-    token: 'mock-jwt-token',
-    user: {
-      id: 'user123',
-      name: 'Alex Johnson',
-      email
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
-  });
-});
 
-app.post('/api/auth/register', (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
-  
-  if (!firstName || !lastName || !email || !password) {
-    return res.status(400).json({ error: 'All fields required' });
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      joinDate: user.createdAt,
+      reportsSubmitted: user.incidents.length,
+      verificationsHelped: user.verifications.length
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  // Mock registration
-  res.status(201).json({
-    token: 'mock-jwt-token',
-    user: {
-      id: Date.now().toString(),
-      name: `${firstName} ${lastName}`,
-      email
-    }
-  });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
+// Start server
+async function startServer() {
+  try {
+    await prisma.$connect();
+    console.log('✅ Database connected successfully');
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('🛑 Shutting down server...');
+  await prisma.$disconnect();
+  process.exit(0);
 });

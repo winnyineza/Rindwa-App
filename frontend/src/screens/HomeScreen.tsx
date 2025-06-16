@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,56 +8,74 @@ import {
   SafeAreaView,
   RefreshControl,
   Alert,
-  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {incidentsAPI, healthAPI, Incident} from '../services/api';
+import { showMessage } from 'react-native-flash-message';
+
+import { incidentsAPI, healthAPI, Incident } from '../services/api';
+import { RootState } from '../store';
+import SkeletonPlaceholder from '../components/SkeletonPlaceholder';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { user } = useSelector((state: RootState) => state.auth);
 
-  const fetchIncidents = async () => {
-    try {
-      console.log('HomeScreen: Fetching incidents from API');
-      const data = await incidentsAPI.getAll();
-      console.log('HomeScreen: Received incidents:', data.length);
-      setIncidents(data);
-      setError(null);
-    } catch (err: any) {
-      console.error('HomeScreen: Error fetching incidents:', err);
-      setError(err.response?.data?.error || 'Failed to load incidents');
-      Alert.alert('Error', 'Failed to load incidents. Please check your connection.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fetch incidents with React Query
+  const {
+    data: incidentsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['incidents'],
+    queryFn: () => incidentsAPI.getAll(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 3,
+  });
 
-  const checkBackendHealth = async () => {
-    try {
-      console.log('HomeScreen: Checking backend health');
-      const health = await healthAPI.check();
-      console.log('HomeScreen: Backend health:', health);
-    } catch (err) {
-      console.error('HomeScreen: Backend health check failed:', err);
-      setError('Backend server is not available');
-    }
-  };
+  // Health check query
+  const { data: healthData } = useQuery({
+    queryKey: ['health'],
+    queryFn: () => healthAPI.check(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
 
-  useEffect(() => {
-    console.log('HomeScreen: Component mounted');
-    checkBackendHealth();
-    fetchIncidents();
-  }, []);
+  // Verify incident mutation
+  const verifyMutation = useMutation({
+    mutationFn: (incidentId: string) => incidentsAPI.verify(incidentId),
+    onSuccess: (data) => {
+      showMessage({
+        message: 'Success!',
+        description: 'Incident verified successfully',
+        type: 'success',
+      });
+      // Invalidate and refetch incidents
+      queryClient.invalidateQueries({ queryKey: ['incidents'] });
+    },
+    onError: (error: any) => {
+      showMessage({
+        message: 'Error',
+        description: error.message || 'Failed to verify incident',
+        type: 'danger',
+      });
+    },
+  });
 
-  const onRefresh = async () => {
-    console.log('HomeScreen: Refreshing data');
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchIncidents();
-    setRefreshing(false);
-  };
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   const formatTimeAgo = (timestamp: string) => {
     const diff = Date.now() - new Date(timestamp).getTime();
@@ -67,7 +85,8 @@ export default function HomeScreen() {
     
     if (days > 0) return `${days}d ago`;
     if (hours > 0) return `${hours}h ago`;
-    return `${minutes}m ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
   };
 
   const getPriorityColor = (priority: string) => {
@@ -79,29 +98,101 @@ export default function HomeScreen() {
     }
   };
 
-  const handleVerifyIncident = async (incidentId: string) => {
-    try {
-      console.log('HomeScreen: Verifying incident:', incidentId);
-      await incidentsAPI.verify(incidentId);
-      Alert.alert('Success', 'Incident verified successfully!');
-      fetchIncidents(); // Refresh the list
-    } catch (err: any) {
-      console.error('HomeScreen: Error verifying incident:', err);
-      Alert.alert('Error', err.response?.data?.error || 'Failed to verify incident');
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'priority-high';
+      case 'medium': return 'warning';
+      case 'low': return 'info';
+      default: return 'help';
     }
   };
 
-  if (loading) {
+  const handleVerifyIncident = (incidentId: string) => {
+    Alert.alert(
+      'Verify Incident',
+      'Are you sure you want to verify this incident?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Verify', onPress: () => verifyMutation.mutate(incidentId) },
+      ]
+    );
+  };
+
+  const renderSkeleton = () => (
+    <View style={styles.skeletonContainer}>
+      {[1, 2, 3].map((item) => (
+        <SkeletonPlaceholder key={item}>
+          <View style={styles.skeletonCard}>
+            <View style={styles.skeletonHeader}>
+              <View style={styles.skeletonBadge} />
+              <View style={styles.skeletonTime} />
+            </View>
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonDescription} />
+            <View style={styles.skeletonLocation} />
+          </View>
+        </SkeletonPlaceholder>
+      ))}
+    </View>
+  );
+
+  const renderIncidentCard = (incident: Incident) => (
+    <TouchableOpacity 
+      key={incident.id} 
+      style={styles.incidentCard}
+      onPress={() => handleVerifyIncident(incident.id)}
+      activeOpacity={0.7}>
+      <View style={styles.incidentHeader}>
+        <View style={[styles.priorityBadge, {backgroundColor: getPriorityColor(incident.priority)}]}>
+          <Icon name={getPriorityIcon(incident.priority)} size={16} color="white" />
+          <Text style={styles.priorityText}>{incident.priority.toUpperCase()}</Text>
+        </View>
+        <Text style={styles.timestamp}>{formatTimeAgo(incident.createdAt)}</Text>
+      </View>
+      
+      <Text style={styles.incidentType}>{incident.type}</Text>
+      <Text style={styles.incidentDescription} numberOfLines={3}>
+        {incident.description}
+      </Text>
+      
+      <View style={styles.locationRow}>
+        <Icon name="location-on" size={16} color="#666" />
+        <Text style={styles.location} numberOfLines={1}>{incident.location}</Text>
+      </View>
+      
+      <View style={styles.verificationRow}>
+        <Icon 
+          name={incident.verified ? "verified" : "pending"} 
+          size={16} 
+          color={incident.verified ? "#27ae60" : "#f39c12"} 
+        />
+        <Text style={styles.verificationText}>
+          {incident.verifications.length} verification{incident.verifications.length !== 1 ? 's' : ''}
+          {incident.verified ? ' • Verified' : ' • Pending'}
+        </Text>
+      </View>
+
+      <View style={styles.reporterRow}>
+        <Icon name="person" size={14} color="#666" />
+        <Text style={styles.reporterText}>Reported by {incident.reporter.name}</Text>
+      </View>
+
+      {verifyMutation.isPending && (
+        <View style={styles.verifyingOverlay}>
+          <Text style={styles.verifyingText}>Verifying...</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Rindwa App</Text>
           <Text style={styles.headerSubtitle}>Community Safety</Text>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#e74c3c" />
-          <Text style={styles.loadingText}>Loading incidents...</Text>
-        </View>
+        {renderSkeleton()}
       </SafeAreaView>
     );
   }
@@ -109,66 +200,50 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Rindwa App</Text>
-        <Text style={styles.headerSubtitle}>Community Safety</Text>
+        <View>
+          <Text style={styles.headerTitle}>Rindwa App</Text>
+          <Text style={styles.headerSubtitle}>Community Safety</Text>
+        </View>
+        {user && (
+          <View style={styles.userInfo}>
+            <Icon name="person" size={20} color="white" />
+            <Text style={styles.userName}>{user.name}</Text>
+          </View>
+        )}
       </View>
+
+      {healthData && (
+        <View style={styles.healthIndicator}>
+          <Icon name="check-circle" size={16} color="#27ae60" />
+          <Text style={styles.healthText}>System Online</Text>
+        </View>
+      )}
 
       {error && (
         <View style={styles.errorContainer}>
           <Icon name="error" size={20} color="#e74c3c" />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>
+            {error instanceof Error ? error.message : 'Failed to load incidents'}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       )}
 
       <ScrollView
         style={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}>
         
-        {incidents.length === 0 ? (
+        {incidentsData?.data && incidentsData.data.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Icon name="info" size={48} color="#95a5a6" />
+            <Icon name="info" size={64} color="#95a5a6" />
             <Text style={styles.emptyText}>No incidents reported yet</Text>
             <Text style={styles.emptySubtext}>Be the first to report a safety concern</Text>
           </View>
         ) : (
-          incidents.map((incident) => (
-            <TouchableOpacity 
-              key={incident.id} 
-              style={styles.incidentCard}
-              onPress={() => handleVerifyIncident(incident.id)}>
-              <View style={styles.incidentHeader}>
-                <View style={[styles.priorityBadge, {backgroundColor: getPriorityColor(incident.priority)}]}>
-                  <Text style={styles.priorityText}>{incident.priority.toUpperCase()}</Text>
-                </View>
-                <Text style={styles.timestamp}>{formatTimeAgo(incident.createdAt)}</Text>
-              </View>
-              
-              <Text style={styles.incidentType}>{incident.type}</Text>
-              <Text style={styles.incidentDescription}>{incident.description}</Text>
-              
-              <View style={styles.locationRow}>
-                <Icon name="location-on" size={16} color="#666" />
-                <Text style={styles.location}>{incident.location}</Text>
-              </View>
-              
-              <View style={styles.verificationRow}>
-                <Icon 
-                  name={incident.verified ? "verified" : "pending"} 
-                  size={16} 
-                  color={incident.verified ? "#27ae60" : "#f39c12"} 
-                />
-                <Text style={styles.verificationText}>
-                  {incident.verifications.length} verification{incident.verifications.length !== 1 ? 's' : ''}
-                  {incident.verified ? ' • Verified' : ' • Pending'}
-                </Text>
-              </View>
-
-              <View style={styles.reporterRow}>
-                <Icon name="person" size={14} color="#666" />
-                <Text style={styles.reporterText}>Reported by {incident.reporter.name}</Text>
-              </View>
-            </TouchableOpacity>
-          ))
+          incidentsData?.data.map(renderIncidentCard)
         )}
       </ScrollView>
     </SafeAreaView>
@@ -183,6 +258,9 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     backgroundColor: '#e74c3c',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 24,
@@ -195,34 +273,108 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     marginTop: 4,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  userInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#666',
+  userName: {
+    color: 'white',
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  healthIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  healthText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: '#27ae60',
+    fontWeight: '500',
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fdf2f2',
-    padding: 12,
+    padding: 16,
     margin: 16,
     borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#e74c3c',
+    borderWidth: 1,
+    borderColor: '#fecaca',
   },
   errorText: {
-    marginLeft: 8,
+    flex: 1,
     color: '#e74c3c',
+    marginLeft: 8,
     fontSize: 14,
+  },
+  retryButton: {
+    backgroundColor: '#e74c3c',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
   },
   content: {
     flex: 1,
     padding: 16,
+  },
+  skeletonContainer: {
+    padding: 16,
+  },
+  skeletonCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  skeletonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  skeletonBadge: {
+    width: 80,
+    height: 24,
+    borderRadius: 12,
+  },
+  skeletonTime: {
+    width: 60,
+    height: 16,
+    borderRadius: 8,
+  },
+  skeletonTitle: {
+    width: '70%',
+    height: 20,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  skeletonDescription: {
+    width: '100%',
+    height: 16,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  skeletonLocation: {
+    width: '50%',
+    height: 16,
+    borderRadius: 4,
   },
   emptyContainer: {
     flex: 1,
@@ -233,55 +385,61 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#95a5a6',
     marginTop: 16,
+    marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
-    marginTop: 8,
+    color: '#bdc3c7',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   incidentCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
-    elevation: 2,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 3,
   },
   incidentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   priorityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   priorityText: {
     color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   timestamp: {
     fontSize: 12,
     color: '#666',
   },
   incidentType: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   incidentDescription: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    lineHeight: 20,
+    marginBottom: 12,
   },
   locationRow: {
     flexDirection: 'row',
@@ -289,9 +447,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   location: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
-    marginLeft: 4,
+    marginLeft: 8,
+    flex: 1,
   },
   verificationRow: {
     flexDirection: 'row',
@@ -301,7 +460,7 @@ const styles = StyleSheet.create({
   verificationText: {
     fontSize: 12,
     color: '#666',
-    marginLeft: 4,
+    marginLeft: 8,
   },
   reporterRow: {
     flexDirection: 'row',
@@ -310,6 +469,21 @@ const styles = StyleSheet.create({
   reporterText: {
     fontSize: 12,
     color: '#666',
-    marginLeft: 4,
+    marginLeft: 8,
+  },
+  verifyingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  verifyingText: {
+    color: '#e74c3c',
+    fontWeight: '600',
   },
 });

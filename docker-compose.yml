@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: rindwa-postgres
+    environment:
+      POSTGRES_DB: rindwa_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: rindwa-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/rindwa_db
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data: 

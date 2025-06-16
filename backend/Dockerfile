@@ -2,6 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install OpenSSL 1.1 compatibility for Prisma
+RUN apk add --no-cache openssl1.1-compat-dev
+
 # Copy package files
 COPY package*.json ./
 
@@ -14,11 +17,11 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
+# Build TypeScript
 RUN npm run build
 
 # Expose port
 EXPOSE 3000
 
-# Start the application
+# Start the server
 CMD ["npm", "start"] 

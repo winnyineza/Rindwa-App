@@ -1,9 +1,7 @@
-FROM node:18-alpine
+# Use official Node.js 18 image (not Alpine) to avoid OpenSSL issues
+FROM node:18
 
 WORKDIR /app
-
-# Install OpenSSL 1.1 compatibility for Prisma
-RUN apk add --no-cache openssl1.1-compat-dev
 
 # Copy package files
 COPY package*.json ./

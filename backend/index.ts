@@ -362,6 +362,25 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/users - List all users (for admin dashboard)
+app.get('/api/users', authenticateToken, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        createdAt: true
+      }
+    });
+    res.json(users);
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Start server
 async function startServer() {
   try {

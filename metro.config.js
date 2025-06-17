@@ -8,7 +8,7 @@ const path = require('path');
  * @type {import('metro-config').MetroConfig}
  */
 const config = {
-  projectRoot: path.resolve(__dirname, 'mobile-app'),
+  projectRoot: __dirname,
   watchFolders: [__dirname],
 };
 

@@ -14,9 +14,18 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
+// Check if FRONTEND_URL is set in production
+if (process.env.NODE_ENV === 'production' && !process.env.FRONTEND_URL) {
+  console.error('FRONTEND_URL environment variable not set in production!');
+  process.exit(1);
+}
+
 // Security middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:19006', // Allow requests from the frontend
+  credentials: true // Allow cookies to be sent
+}));
 app.use(express.json());
 
 // Rate limiting
@@ -25,6 +34,22 @@ const limiter = rateLimit({
   max: 100 // limit each IP to 100 requests per windowMs
 });
 app.use(limiter);
+
+// Middleware to validate request body
+const validateRequest = (requiredFields: string[]) => (req: any, res: any, next: any) => {
+  for (const field of requiredFields) {
+    if (!req.body[field]) {
+      return res.status(400).json({ error: `${field} is required` });
+    }
+  }
+  next();
+};
+
+// Middleware to handle errors
+const errorHandler = (err: any, req: any, res: any, next: any) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+};
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -45,7 +70,12 @@ const authenticateToken = async (req: any, res: any, next: any) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('JWT_SECRET environment variable not set!');
+      process.exit(1);
+    }
+    const decoded = jwt.verify(token, secret);
     req.user = decoded;
     next();
   } catch (error) {
@@ -54,13 +84,9 @@ const authenticateToken = async (req: any, res: any, next: any) => {
 };
 
 // Authentication endpoints
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', validateRequest(['email', 'password', 'name']), async (req: any, res: any, next: any) => {
   try {
     const { email, password, name, phone } = req.body;
-
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Email, password, and name are required' });
-    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -102,18 +128,13 @@ app.post('/api/auth/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', validateRequest(['email', 'password']), async (req: any, res: any, next: any) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -149,13 +170,12 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
 // Incidents endpoints
-app.get('/api/incidents', async (req, res) => {
+app.get('/api/incidents', async (req: any, res: any, next: any) => {
   try {
     const incidents = await prisma.incident.findMany({
       include: {
@@ -176,12 +196,11 @@ app.get('/api/incidents', async (req, res) => {
 
     res.json(incidents);
   } catch (error) {
-    console.error('Get incidents error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
-app.post('/api/incidents', authenticateToken, async (req, res) => {
+app.post('/api/incidents', authenticateToken, async (req: any, res: any, next: any) => {
   try {
     const { type, description, location, priority = 'medium', latitude, longitude } = req.body;
     const userId = req.user.userId;
@@ -213,12 +232,11 @@ app.post('/api/incidents', authenticateToken, async (req, res) => {
 
     res.status(201).json(incident);
   } catch (error) {
-    console.error('Create incident error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
-app.patch('/api/incidents/:id/verify', authenticateToken, async (req, res) => {
+app.patch('/api/incidents/:id/verify', authenticateToken, async (req: any, res: any, next: any) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
@@ -271,13 +289,12 @@ app.patch('/api/incidents/:id/verify', authenticateToken, async (req, res) => {
 
     res.json(incident);
   } catch (error) {
-    console.error('Verify incident error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
 // Emergency contacts endpoints
-app.get('/api/contacts', authenticateToken, async (req, res) => {
+app.get('/api/contacts', authenticateToken, async (req: any, res: any, next: any) => {
   try {
     const userId = req.user.userId;
     const contacts = await prisma.emergencyContact.findMany({
@@ -287,12 +304,11 @@ app.get('/api/contacts', authenticateToken, async (req, res) => {
 
     res.json(contacts);
   } catch (error) {
-    console.error('Get contacts error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
-app.post('/api/contacts', authenticateToken, async (req, res) => {
+app.post('/api/contacts', authenticateToken, async (req: any, res: any, next: any) => {
   try {
     const { name, phone, relationship, isPrimary = false } = req.body;
     const userId = req.user.userId;
@@ -321,13 +337,12 @@ app.post('/api/contacts', authenticateToken, async (req, res) => {
 
     res.status(201).json(contact);
   } catch (error) {
-    console.error('Create contact error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
 // User profile endpoint
-app.get('/api/profile', authenticateToken, async (req, res) => {
+app.get('/api/profile', authenticateToken, async (req: any, res: any, next: any) => {
   try {
     const userId = req.user.userId;
 
@@ -357,13 +372,12 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
       verificationsHelped: user.verifications.length
     });
   } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
 
 // GET /api/users - List all users (for admin dashboard)
-app.get('/api/users', authenticateToken, async (req, res) => {
+app.get('/api/users', authenticateToken, async (req: any, res: any, next: any) => {
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -376,10 +390,12 @@ app.get('/api/users', authenticateToken, async (req, res) => {
     });
     res.json(users);
   } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    next(error);
   }
 });
+
+// Apply error handler middleware
+app.use(errorHandler);
 
 // Start server
 async function startServer() {
@@ -397,6 +413,7 @@ async function startServer() {
   }
 }
 
+// Start the server
 startServer();
 
 // Graceful shutdown

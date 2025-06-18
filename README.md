@@ -1,307 +1,163 @@
-# 🚨 Rindwa App - Emergency Reporting Platform
+# Rindwa App - Community Safety Platform
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.72.0-blue.svg)](https://reactnative.dev/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Rindwa App is a mobile application designed to empower communities through shared safety awareness. The app allows users to report safety incidents, verify reports from others, manage emergency contacts, and stay informed about safety concerns in their area.
 
-A comprehensive emergency reporting platform built with React Native, Node.js, and PostgreSQL. Rindwa App enables real-time incident reporting, verification, and response coordination for emergency situations.
+## Project Structure
 
-## 🌟 Features
+The project is organized into three main components:
 
-### 📱 Mobile Application
-- **Real-time Emergency Reporting** - Report incidents with location, media, and priority classification
-- **User Authentication** - Secure registration and login with JWT tokens
-- **Offline Support** - Continue working without internet connection
-- **Push Notifications** - Get updates on incident status and responses
-- **Location Services** - GPS-based incident reporting and tracking
-- **Media Upload** - Attach photos and videos to incident reports
+1. **Frontend** - React Native mobile application using Expo
+2. **Backend** - Node.js/Express API server with Prisma ORM
+3. **Admin Dashboard** - React web application for administration
 
-### 📊 Admin Dashboard
-- **Incident Management** - Real-time monitoring and verification workflow
-- **Analytics & Reporting** - Comprehensive statistics and data visualization
-- **User Administration** - Manage users, roles, and permissions
-- **System Configuration** - Configure notifications and application settings
+## Features
 
-### 🔧 Backend API
-- **RESTful API** - Complete CRUD operations for all entities
-- **Authentication & Authorization** - JWT-based security with role-based access
-- **File Management** - Secure media upload and storage
-- **Database Integration** - PostgreSQL with Prisma ORM
-- **Real-time Updates** - WebSocket integration for live data
+- **User Authentication** - Register, login, and account management
+- **Incident Reporting** - Report safety incidents with location data and media attachments
+- **Community Verification** - Verify incidents reported by others in your community
+- **Emergency Contacts** - Manage personal emergency contacts for quick access
+- **Real-time Notifications** - Get alerted about incidents in your area
+- **Offline Support** - Basic functionality works without internet connection
+- **Multi-language Support** - Interface available in multiple languages
 
-## 🏗️ Architecture
+## Tech Stack
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React Native  │    │   React Admin   │    │   Node.js API   │
-│   Mobile App    │◄──►│   Dashboard     │◄──►│   (Express)     │
-│   (Expo)        │    │   (TypeScript)  │    │   (TypeScript)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                        │
-                                                        ▼
-                                               ┌─────────────────┐
-                                               │   PostgreSQL    │
-                                               │   Database      │
-                                               └─────────────────┘
-```
+### Frontend
+- React Native / Expo
+- Redux Toolkit for state management
+- React Navigation for routing
+- Axios for API requests
+- React Query for data fetching
+- Formik and Yup for form handling and validation
+- React Native Paper for UI components
+- Sentry for error monitoring
+- Firebase Analytics for usage tracking
 
-## 🚀 Quick Start
+### Backend
+- Node.js / Express
+- TypeScript
+- Prisma ORM
+- PostgreSQL database
+- JWT authentication
+- File storage with Firebase Storage
+- Swagger for API documentation
+
+### Admin Dashboard
+- React
+- Material UI
+- Redux Toolkit
+- Chart.js for data visualization
+
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Docker and Docker Compose
-- Expo CLI (`npm install -g @expo/cli`)
-- Git
+- Node.js 18+
+- npm or yarn
+- PostgreSQL database
+- Expo CLI (for mobile development)
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd Rindwa-App
+### Setup Instructions
+
+1. **Clone the repository**
+   ```
+   git clone https://github.com/your-org/rindwa-app.git
+   cd rindwa-app
+   ```
+
+2. **Set up environment variables**
+   ```
+   cp .env.example .env
+   cp frontend/env.example frontend/.env
+   cp backend/prisma/.env.example backend/prisma/.env
+   ```
+   
+   Edit the `.env` files with your configuration details.
+
+3. **Install dependencies**
+   ```
+   # Install root dependencies
+   npm install
+   
+   # Install frontend dependencies
+   cd frontend
+   npm install
+   
+   # Install backend dependencies
+   cd ../backend
+   npm install
+   
+   # Install admin dashboard dependencies
+   cd ../admin-dashboard
+   npm install
+   ```
+
+4. **Run database migrations**
+   ```
+   cd backend
+   npx prisma migrate dev
+   ```
+
+5. **Start the development servers**
+   ```
+   # Start backend
+   cd backend
+   npm run dev
+   
+   # Start frontend
+   cd frontend
+   npm run start
+   
+   # Start admin dashboard
+   cd admin-dashboard
+   npm run start
+   ```
+
+## Development
+
+### Mobile App (Frontend)
+
+The React Native app uses Expo for easier development and deployment. Key files and directories:
+
+- `frontend/src/screens/` - All app screens
+- `frontend/src/components/` - Reusable UI components
+- `frontend/src/navigation/` - Navigation configuration
+- `frontend/src/services/` - API client and other services
+- `frontend/src/store/` - Redux store and slices
+
+### Backend API
+
+The backend uses Express with TypeScript and Prisma ORM. Key files and directories:
+
+- `backend/prisma/schema.prisma` - Database schema
+- `backend/index.ts` - Entry point
+- `backend/routes/` - API routes
+- `backend/controllers/` - Business logic
+- `backend/middleware/` - Express middleware
+
+## Testing
+
+- Unit tests use Jest
+- Integration tests for API endpoints
+- E2E tests with Detox for the mobile app
+
 ```
-
-### 2. Environment Setup
-```bash
-# Copy environment files
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-cp admin-dashboard/.env.example admin-dashboard/.env
-
-# Edit the files with your configuration
-```
-
-### 3. Install Dependencies
-```bash
-# Backend
-cd backend
-npm install
-npx prisma generate
-
-# Frontend
-cd ../frontend
-npm install
-
-# Admin Dashboard
-cd ../admin-dashboard
-npm install
-```
-
-### 4. Start Services
-
-#### Option A: Using the Startup Script (Recommended)
-```bash
-# Windows PowerShell
-.\start-app.ps1
-
-# Linux/Mac
-chmod +x start-app.sh
-./start-app.sh
-```
-
-#### Option B: Manual Start
-```bash
-# Start database
-docker-compose up -d postgres
-
-# Start backend (in new terminal)
-cd backend
-npm run dev
-
-# Start admin dashboard (in new terminal)
-cd admin-dashboard
-npm start
-
-# Start mobile app (in new terminal)
-cd frontend
-npm start
-```
-
-### 5. Access the Application
-- **Mobile App**: Scan QR code from Expo development server
-- **Admin Dashboard**: http://localhost:3001
-- **API Documentation**: http://localhost:3000/api
-- **Database**: localhost:5432
-
-## 📱 Mobile App Usage
-
-### Installation
-1. Install Expo Go from your device's app store
-2. Scan the QR code from the Expo development server
-3. The app will load on your device
-
-### Features
-- **Report Emergency**: Tap the emergency button to report an incident
-- **View Incidents**: Browse reported incidents in your area
-- **Profile Management**: Update your profile and notification preferences
-- **Offline Mode**: Continue using the app without internet connection
-
-## 📊 Admin Dashboard Usage
-
-### Access
-1. Open http://localhost:3001 in your browser
-2. Login with admin credentials
-3. Navigate through the dashboard sections
-
-### Features
-- **Incident Management**: View, verify, and update incident status
-- **User Management**: Manage user accounts and permissions
-- **Analytics**: View statistics and generate reports
-- **System Settings**: Configure application parameters
-
-## 🔧 API Documentation
-
-### Authentication Endpoints
-```http
-POST /api/auth/register    # User registration
-POST /api/auth/login       # User login
-POST /api/auth/refresh     # Refresh token
-POST /api/auth/logout      # User logout
-```
-
-### Incident Endpoints
-```http
-GET    /api/incidents      # List incidents
-POST   /api/incidents      # Create incident
-PUT    /api/incidents/:id  # Update incident
-DELETE /api/incidents/:id  # Delete incident
-```
-
-### User Endpoints
-```http
-GET  /api/users/profile    # Get user profile
-PUT  /api/users/profile    # Update profile
-POST /api/users/notifications # Update notifications
-```
-
-## 🐳 Docker Deployment
-
-### Development
-```bash
-# Start all services
-docker-compose up --build
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-```
-
-### Production
-```bash
-# Build production images
-docker-compose -f docker-compose.prod.yml up --build -d
-
-# Scale services
-docker-compose -f docker-compose.prod.yml up --scale backend=3
-```
-
-## 🧪 Testing
-
-### Run All Tests
-```bash
-# Backend tests
-cd backend
-npm test
-
-# Frontend tests
+# Run frontend tests
 cd frontend
 npm test
 
-# E2E tests
-cd frontend
-npm run test:e2e
+# Run backend tests
+cd backend
+npm test
 ```
 
-### Test Coverage
-```bash
-# Generate coverage reports
-npm run test:coverage
-```
+## Deployment
 
-## 🔒 Security Features
+The app is containerized using Docker for easier deployment. See `DEPLOYMENT.md` for detailed instructions.
 
-- **JWT Authentication** with refresh tokens
-- **Password Hashing** using bcrypt
-- **Input Validation** and sanitization
-- **CORS Configuration** for cross-origin requests
-- **Rate Limiting** to prevent abuse
-- **Environment Variables** for sensitive data
+## Contributing
 
-## 📈 Monitoring & Analytics
+Please read `CONTRIBUTING.md` for details on our code of conduct and the process for submitting pull requests.
 
-- **Error Tracking**: Sentry integration
-- **Analytics**: Firebase Analytics
-- **Performance**: React Query DevTools
-- **Health Checks**: Automated service monitoring
-- **Logging**: Structured logging with Winston
+## License
 
-## 🛠️ Development
-
-### Code Quality
-- ESLint and Prettier for code formatting
-- Pre-commit hooks for automated checks
-- TypeScript for type safety
-- Comprehensive test coverage
-
-### Git Workflow
-1. Create feature branch from main
-2. Make changes with tests
-3. Run linting and tests
-4. Submit pull request
-5. Code review and merge
-
-## 📚 Documentation
-
-- [Deployment Guide](DEPLOYMENT.md)
-- [API Documentation](docs/API.md)
-- [Database Schema](docs/DATABASE.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: Check the [docs](docs/) folder
-- **Issues**: Create an issue on GitHub
-- **Discussions**: Use GitHub Discussions
-- **Email**: Contact the development team
-
-## 🎯 Roadmap
-
-### Upcoming Features
-- [ ] Real-time messaging system
-- [ ] Advanced analytics and reporting
-- [ ] Integration with emergency services
-- [ ] Voice-to-text reporting
-- [ ] Offline incident reporting
-- [ ] Multi-language support
-
-### Technical Improvements
-- [ ] GraphQL implementation
-- [ ] Microservices architecture
-- [ ] Advanced caching strategies
-- [ ] CDN integration
-- [ ] Two-factor authentication
-
-## 🙏 Acknowledgments
-
-- React Native and Expo teams
-- Node.js and Express communities
-- PostgreSQL and Prisma teams
-- All contributors and supporters
-
----
-
-**Made with ❤️ for emergency response and community safety**
+This project is licensed under the MIT License - see the `LICENSE` file for details.

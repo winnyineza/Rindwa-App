@@ -1,0 +1,30 @@
+{
+  "appId": "com.rindwa.app",
+  "productName": "Rindwa App",
+  "directories": {
+    "output": "dist-electron"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/main.js",
+    "electron/preload.js"
+  ],
+  "extraMetadata": {
+    "main": "electron/main.js"
+  },
+  "win": {
+    "target": "nsis",
+    "icon": "public/favicon.ico",
+    "signAndEditExecutable": false
+  },
+  "mac": {
+    "category": "public.app-category.utilities"
+  },
+  "linux": {
+    "target": "AppImage"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}
